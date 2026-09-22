@@ -171,3 +171,37 @@ Audit logs, backups, alert integrations, CMEK, private endpoints, network peers,
 credentials, query indexes, replications, sample buckets, users, API keys, AI Data Plane
 (models, workflows, providers) are all read/write management surfaces outside the reporting
 scope. `Api Keys` `createOrganizationAPIKey` can mint further keys but this tool never does.
+
+## 7. Analytics (Columnar) clusters
+
+Analytics clusters are managed by a separate spec, the **Capella Analytics Management API**
+(`https://docs.couchbase.com/analytics/management-api-reference/_attachments/openapi.columnar.generated.yaml`,
+title "Couchbase Capella Analytics Management API", version 4.0; vendored at
+`backend/vendor/capella-analytics-openapi.yaml`). It shares the **same base URL**
+(`https://cloudapi.cloud.couchbase.com`), the **same bearer scheme** and the **same API keys**
+as the Operational API, so one Organization Owner key covers both.
+
+| operationId | Path | Used for |
+|---|---|---|
+| `listProjectLevelAnalyticsClusters` | `GET /v4/organizations/{org}/projects/{project}/analyticsClusters` | Inventory per project (the org-level list `GET /v4/organizations/{org}/analyticsClusters` omits `projectId`, so the sync walks projects) |
+| `getAnalyticsCluster` | `GET .../projects/{project}/analyticsClusters/{id}` | Detail (same fields) |
+| `getAnalyticsOnOffSchedule` | `GET .../analyticsClusters/{id}/onOffSchedule` | Optional context |
+
+Analytics cluster shape: `id`, `name`, `cloudProvider` (string), `region`, `nodes`,
+`compute{cpu,ram}`, `support{plan ∈ developer pro|enterprise, timezone}`,
+`availability{type ∈ single|multi}`, `currentState` (healthy, turnedOff, scaling, ...).
+There are no service groups, buckets or versions in the API response.
+
+**Billing.** The categorized billing categories `analyticsCompute`, `analyticsStorage` and
+`analyticsClusterBackup` carry Analytics spend, and the Capella UI's usage report filters by
+"Analytics clusters", so the sync requests `categorizedBilling` with
+`filters.instanceIds=[analyticsClusterId]` per month exactly like operational clusters
+(scope `analytics`). The spec's `instanceIds` description lists cluster, App Service and AI
+ids without naming Analytics explicitly; if Capella rejects an Analytics id the failure is
+recorded per instance in the sync run and the org-level roll-up (which always includes the
+three analytics categories) still shows the Analytics total as unattributed spend. The
+itemized-per-cluster endpoint is operational-only and is not used for Analytics.
+
+**Topology.** An Analytics cluster renders as one server group named `analytics` with one
+node tile (`total = nodes`, `services = ["Analytics"]`, `resources` from `compute`) and no
+buckets.

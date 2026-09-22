@@ -8,8 +8,10 @@ still to be defined by the owner and is a deliberate open slot (see §8).
 Give a Couchbase PS engineer, holding one Capella Management API key with the Organization
 Owner role (one key = one organization = one billing account), a local tool that:
 
-1. pulls credit consumption per cluster and per App Service from the Capella Billing API,
-2. pulls the inventory (projects, clusters, service groups, buckets, App Services),
+1. pulls credit consumption per operational cluster, per Analytics (Columnar) cluster and per
+   App Service from the Capella Billing API,
+2. pulls the inventory (projects, operational clusters, service groups, buckets, App Services,
+   Analytics clusters via the Capella Analytics Management API, same key and base URL),
 3. shows each cluster / App Service configuration with `@couchbaselabs/topology-ui`,
 4. shows credit consumption over time and prepaid-credit balance,
 5. leaves a clean extension point for custom credits reports.
@@ -37,7 +39,7 @@ capella-billing-api-insights/
       capella/mock.py         # fixture-backed client for demo/tests (CAPELLA_MOCK=true)
       store/db.py             # sqlite connection + schema
       store/repo.py           # typed repositories
-      sync/inventory.py       # org -> projects -> clusters -> buckets -> app services -> endpoints
+      sync/inventory.py       # org -> projects -> clusters -> buckets -> app services -> endpoints -> analytics clusters
       sync/billing.py         # monthly-window categorized billing per instance + org roll-up
       sync/runner.py          # orchestrates a sync, records sync_runs
       topology/mapper.py      # Capella inventory -> topology-ui document
@@ -92,9 +94,11 @@ Tables (all timestamps ISO-8601 UTC):
 - `bucket(cluster_id, name, raw_json, PK(cluster_id, name))`
 - `app_service(id PK, cluster_id, name, nodes, cpu, ram, version, plan, state, raw_json)`
 - `app_endpoint(app_service_id, name, bucket, raw_json, PK(app_service_id, name))`
+- `analytics_cluster(id PK, project_id, name, provider, region, nodes, cpu, ram, support_plan,
+  availability, state, raw_json, synced_at)`
 - `credit_usage(day DATE, scope TEXT, instance_id TEXT, category TEXT, credit_spend REAL,
   currency_spend REAL, currency TEXT, fetched_at, PK(day, scope, instance_id, category))`
-  where `scope ∈ {org, cluster, appservice}` and `instance_id` is `''` for `org`.
+  where `scope ∈ {org, cluster, appservice, analytics}` and `instance_id` is `''` for `org`.
 - `prepaid_credit(id PK, credit_name, support_plan, start_date, expiration_date, total,
   used, remaining, remaining_percent, fetched_at)`
 - `payg_period(day DATE PK, basic, dev_pro, enterprise, total, currency, fetched_at)`
@@ -113,12 +117,14 @@ sync():
   for c in clusters (non free-tier): buckets[c] = listBuckets(c)
   appservices = walk(listAppServices)
   for a in appservices: endpoints[a] = walk(listAppEndpoints(a))
+  for p in projects: analytics += walk(listProjectLevelAnalyticsClusters(p))   # Analytics API
   window = [max(first_missing_day, today-BACKFILL), yesterday]
            ∪ [today-REFRESH, yesterday]
   for each calendar month m overlapping window:
      org_usage   = categorizedBilling(m)                        # scope=org
      for c in billable clusters: categorizedBilling(m, instanceIds=[c.id])   # scope=cluster
      for a in appservices:       categorizedBilling(m, instanceIds=[a.id])   # scope=appservice
+     for x in analytics:         categorizedBilling(m, instanceIds=[x.id])   # scope=analytics
      payg = payAsYouGoBilling(m)
   prepaid = walk(prepaidCreditsBilling)
   upsert everything; record sync_run
@@ -143,6 +149,8 @@ All under `/api`, JSON, no auth.
 | `GET /api/clusters/{id}/consumption?from&to&granularity=day|month` | `{series:[{day, category, credits, currency}], total}` |
 | `GET /api/appservices` | App Service cards with credits |
 | `GET /api/appservices/{id}/consumption?...` | same shape |
+| `GET /api/analyticsclusters` | Analytics cluster cards with credits |
+| `GET /api/analyticsclusters/{id}`, `/topology`, `/consumption?...` | detail, topology-ui document, consumption (scope `analytics`) |
 | `GET /api/billing/summary?from&to` | org total by category + unattributed remainder |
 | `GET /api/billing/consumption?from&to&groupBy=category|instance|day` | flexible aggregation |
 | `GET /api/billing/prepaid` | prepaid credit blocks + aggregate remaining |
@@ -172,6 +180,7 @@ reused from the sibling project), TanStack Query for server state, Recharts for 
 - **Cluster detail**: topology-ui render (cluster + attached App Service), daily credits chart
   by category, category table, link to CSV.
 - **App Services**: table + detail reuse of the consumption chart.
+- **Analytics**: Analytics (Columnar) clusters table + detail (topology tile, consumption chart by the three analytics categories).
 - **Reports**: list of registered reports, run with a date range, download CSV.
 
 `TopologyView` copies `node_modules/@couchbaselabs/topology-ui/images` into `public/topology-ui/images`

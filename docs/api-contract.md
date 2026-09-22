@@ -19,7 +19,7 @@ with an appropriate HTTP status.
 `GET /api/organization` →
 ```json
 {"id":"uuid","name":"Acme","billingCurrency":"USD","billingMode":"credits",
- "counts":{"projects":2,"clusters":5,"appServices":1},
+ "counts":{"projects":2,"clusters":5,"appServices":1,"analyticsClusters":1},
  "lastSync":{...same as health...}}
 ```
 `billingMode` ∈ `credits | currency | unknown`, derived from which spend column is populated.
@@ -59,12 +59,23 @@ absent.
   "credits7d":3.1,"credits30d":12.0,"currency7d":null,"currency30d":null}]
 ```
 
+`GET /api/analyticsclusters` →
+```json
+[{"id":"uuid","name":"analytics-eu","projectId":"uuid","projectName":"Prod",
+  "provider":"aws","region":"eu-west-1","nodes":4,"cpu":8,"ram":32,
+  "supportPlan":"enterprise","availability":"multi","state":"healthy",
+  "credits7d":20.0,"credits30d":80.0,"currency7d":null,"currency30d":null}]
+```
+`GET /api/analyticsclusters/{id}` → the card plus `{"createdAt":"...|null"}`.
+`GET /api/analyticsclusters/{id}/topology` → topology-ui document: one server group `analytics`,
+one node with `total = nodes`, `services: ["Analytics"]`, no `buckets`, no `mobile`.
+
 ## Consumption
 
 `GET /api/clusters/{id}/consumption?from&to&granularity=day|month` and
-`GET /api/appservices/{id}/consumption?...` →
+`GET /api/appservices/{id}/consumption?...`, `GET /api/analyticsclusters/{id}/consumption?...` →
 ```json
-{"scope":"cluster","instanceId":"uuid","from":"2026-08-01","to":"2026-08-31","granularity":"day",
+{"scope":"cluster|appservice|analytics","instanceId":"uuid","from":"2026-08-01","to":"2026-08-31","granularity":"day",
  "currency":"USD",
  "series":[{"period":"2026-08-01","category":"operationalComputeAndStorage","credits":10.2,"currency":null}],
  "byCategory":[{"category":"operationalComputeAndStorage","credits":300.1,"currency":null,"contributionPercent":88.4}],
@@ -80,10 +91,10 @@ days; `period` is then `YYYY-MM`.
  "attributed":{"credits":850.0,"currency":null},
  "unattributed":{"credits":50.0,"currency":null},
  "byCategory":[{"category":"...","credits":...,"currency":...,"contributionPercent":...}],
- "byInstance":[{"scope":"cluster","instanceId":"uuid","name":"prod-eu","projectName":"Prod","credits":400.0,"currency":null,"sharePercent":44.4}]}
+ "byInstance":[{"scope":"cluster|appservice|analytics","instanceId":"uuid","name":"prod-eu","projectName":"Prod","credits":400.0,"currency":null,"sharePercent":44.4}]}
 ```
 
-`GET /api/billing/consumption?from&to&groupBy=day|category|instance&scope=org|cluster|appservice`
+`GET /api/billing/consumption?from&to&groupBy=day|category|instance&scope=org|cluster|appservice|analytics`
 → `{"groupBy":"day","rows":[{"key":"2026-08-01","credits":..,"currency":..}]}` — for
 `groupBy=day` on `scope=org` the rows are the org-level daily totals stacked by category:
 `[{"period":"2026-08-01","category":"...","credits":..,"currency":..}]`.
@@ -103,6 +114,8 @@ days; `period` is then `YYYY-MM`.
 
 `GET /api/reports` → `[{"key":"consumption-summary","title":"...","description":"...","params":[{"name":"from","type":"date","required":true}, ...]}]`
 
+Built-in report params: `consumption-summary` (from, to) rows cover every scope including `analytics`; `cluster-daily` (from, to, `clusterId` = an operational **or** Analytics cluster id, the backend resolves the scope).
+
 `GET /api/reports/{key}?from&to&format=json|csv` → JSON:
 `{"key","title","from","to","columns":[{"key":"cluster","label":"Cluster","type":"string|number|date|credits|currency"}],"rows":[{...}],"totals":{...}|null}`
 CSV: `text/csv` with `Content-Disposition: attachment; filename=<key>-<from>_to_<to>.csv`.
@@ -110,4 +123,4 @@ CSV: `text/csv` with `Content-Disposition: attachment; filename=<key>-<from>_to_
 ## Sync
 
 `POST /api/sync` → `202 {"runId":4,"status":"running"}` or `409 {"error":{"code":"sync_running",...}}`
-`GET /api/sync/status` → `{"running":false,"runs":[{"id","startedAt","finishedAt","status","requestsMade","error","detail":{"clustersSynced":5,"appServicesSynced":1,"billingWindows":6,"failures":[{"scope":"cluster","instanceId":"..","message":".."}]}}]}` (last 10 runs, newest first)
+`GET /api/sync/status` → `{"running":false,"runs":[{"id","startedAt","finishedAt","status","requestsMade","error","detail":{"clustersSynced":5,"appServicesSynced":1,"analyticsClustersSynced":1,"billingWindows":6,"failures":[{"scope":"cluster","instanceId":"..","message":".."}]}}]}` (last 10 runs, newest first)
