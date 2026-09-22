@@ -1,0 +1,25 @@
+# env / secrets
+.env
+*.env.local
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+backend/dist/
+# node
+node_modules/
+frontend/dist/
+frontend/public/topology-ui/
+# data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+# os / editors
+.DS_Store
+.idea/
+.vscode/
