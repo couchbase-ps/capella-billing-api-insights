@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import type { ReportColumn, ReportResult, ReportRow } from "../api/types";
-import { formatDate } from "../lib/dates";
+import { formatDate, formatPeriod } from "../lib/dates";
 import { formatCredits, formatCurrency, formatInteger } from "../lib/format";
 import { Table, Td, Th } from "./Table";
 import { EmptyNote } from "./ui";
@@ -20,6 +20,8 @@ function cell(column: ReportColumn, value: string | number | null | undefined): 
         : Number(value).toLocaleString("en-US", { maximumFractionDigits: 2 });
     case "date":
       return formatDate(String(value));
+    case "month":
+      return formatPeriod(String(value));
     default:
       return String(value);
   }
@@ -29,7 +31,8 @@ export function ReportResultTable({ result }: { result: ReportResult }): JSX.Ele
   if (result.rows.length === 0) {
     return <EmptyNote>The report returned no rows for this range.</EmptyNote>;
   }
-  const numeric = (column: ReportColumn) => column.type !== "string" && column.type !== "date";
+  const numeric = (column: ReportColumn) =>
+    column.type !== "string" && column.type !== "date" && column.type !== "month";
   const renderRow = (row: ReportRow, key: string) => (
     <tr key={key}>
       {result.columns.map((column) => (

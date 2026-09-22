@@ -1,4 +1,12 @@
-import { BarChart3, Boxes, FileText, LayoutDashboard, Server, Smartphone } from "lucide-react";
+import {
+  BarChart3,
+  Boxes,
+  FileText,
+  LayoutDashboard,
+  Server,
+  Smartphone,
+  TableProperties,
+} from "lucide-react";
 import type { JSX } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useHealth, useOrganization } from "../api/hooks";
@@ -9,6 +17,7 @@ const NAV = [
   { to: "/clusters", label: "Clusters", icon: Server, end: false },
   { to: "/appservices", label: "App Services", icon: Smartphone, end: false },
   { to: "/analytics", label: "Analytics", icon: BarChart3, end: false },
+  { to: "/insights", label: "Insights", icon: TableProperties, end: false },
   { to: "/reports", label: "Reports", icon: FileText, end: false },
 ];
 

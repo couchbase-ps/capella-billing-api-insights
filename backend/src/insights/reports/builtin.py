@@ -66,6 +66,7 @@ def consumption_summary(ctx: ReportContext) -> ReportResult:
         ],
         rows=rows,
         totals={
+            "scope": "Total",
             "credits": _sum([r["credits"] for r in rows]),
             "currency": _sum([r["currency"] for r in rows]),
         },
@@ -110,6 +111,7 @@ def cluster_daily(ctx: ReportContext) -> ReportResult:
         ],
         rows=rows,
         totals={
+            "day": "Total",
             "credits": _sum([r["credits"] for r in rows]),
             "currency": _sum([r["currency"] for r in rows]),
         },

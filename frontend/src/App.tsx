@@ -7,6 +7,7 @@ import { AppServiceDetail } from "./pages/AppServiceDetail";
 import { AppServices } from "./pages/AppServices";
 import { ClusterDetail } from "./pages/ClusterDetail";
 import { Clusters } from "./pages/Clusters";
+import { Insights } from "./pages/Insights";
 import { Overview } from "./pages/Overview";
 import { Reports } from "./pages/Reports";
 
@@ -21,6 +22,7 @@ export function App(): JSX.Element {
         <Route path="/appservices/:id" element={<AppServiceDetail />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/analytics/:id" element={<AnalyticsDetail />} />
+        <Route path="/insights" element={<Insights />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

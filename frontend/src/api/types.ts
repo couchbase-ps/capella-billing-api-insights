@@ -246,7 +246,7 @@ export interface ReportDefinition {
   params: ReportParam[];
 }
 
-export type ReportColumnType = "string" | "number" | "date" | "credits" | "currency";
+export type ReportColumnType = "string" | "number" | "date" | "month" | "credits" | "currency";
 
 export interface ReportColumn {
   key: string;
@@ -264,6 +264,14 @@ export interface ReportResult {
   columns: ReportColumn[];
   rows: ReportRow[];
   totals: ReportRow | null;
+  meta?: ReportMeta;
+}
+
+export interface ReportMeta {
+  unit?: string;
+  categoryOrder?: string[];
+  partialMonths?: string[];
+  onDemandMethod?: string;
 }
 
 export interface SyncStart {

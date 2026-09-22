@@ -18,6 +18,7 @@ from insights.capella.client import CapellaClient, CapellaSource
 from insights.capella.mock import MockCapellaClient
 from insights.config import Settings, load_settings
 from insights.reports.builtin import register_builtin
+from insights.reports.custom import register_custom
 from insights.store import repo
 from insights.store.db import Database
 from insights.sync.runner import SyncRunner, utc_now_iso
@@ -50,6 +51,7 @@ def create_app(
     """Create the application. ``client``/``db`` overrides are for tests."""
     cfg = settings or load_settings()
     register_builtin()
+    register_custom()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

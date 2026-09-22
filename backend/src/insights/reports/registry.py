@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Literal
 
-ColumnType = Literal["string", "number", "date", "credits", "currency"]
+ColumnType = Literal["string", "number", "date", "month", "credits", "currency"]
 ParamType = Literal["date", "string", "number"]
 
 
@@ -66,9 +66,12 @@ class ReportContext:
 
 @dataclass
 class ReportResult:
+    """Columns, rows, an optional Total row (keyed by column key) and free-form metadata."""
+
     columns: list[ReportColumn]
     rows: list[dict[str, Any]]
     totals: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
 
 
 ReportRunner = Callable[[ReportContext], ReportResult]
@@ -123,6 +126,7 @@ def result_to_json(
         "columns": [c.as_json() for c in result.columns],
         "rows": result.rows,
         "totals": result.totals,
+        "meta": result.meta,
     }
 
 
@@ -134,12 +138,7 @@ def result_to_csv(result: ReportResult) -> str:
     for row in result.rows:
         writer.writerow([_cell(row.get(c.key)) for c in result.columns])
     if result.totals:
-        writer.writerow(
-            [
-                "TOTAL" if i == 0 else _cell(result.totals.get(c.key))
-                for i, c in enumerate(result.columns)
-            ]
-        )
+        writer.writerow([_cell(result.totals.get(c.key)) for c in result.columns])
     return buffer.getvalue()
 
 
