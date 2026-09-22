@@ -42,7 +42,7 @@ def sync() -> None:
     configure_logging(settings.log_level)
 
     async def _run() -> repo.SyncRunRow:
-        database = Database(settings.db_path)
+        database = Database(settings.effective_db_path)
         database.init_schema()
         with database.session() as conn:
             repo.mark_stale_runs_failed(conn, utc_now_iso())
@@ -70,8 +70,8 @@ def db_init() -> None:
     from insights.store.db import Database
 
     settings = load_settings()
-    Database(settings.db_path).init_schema()
-    typer.echo(f"schema ready at {settings.db_path}")
+    Database(settings.effective_db_path).init_schema()
+    typer.echo(f"schema ready at {settings.effective_db_path}")
 
 
 if __name__ == "__main__":  # pragma: no cover

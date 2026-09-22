@@ -288,6 +288,7 @@ export interface SyncFailure {
 export interface SyncRun extends SyncRunSummary {
   detail: {
     clustersSynced: number;
+    bucketsSkipped?: number;
     appServicesSynced: number;
     analyticsClustersSynced: number;
     billingWindows: number;

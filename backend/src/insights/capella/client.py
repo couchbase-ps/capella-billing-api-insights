@@ -156,15 +156,16 @@ class CapellaClient:
                 return payload if isinstance(payload, dict) else {"data": payload}
             if self._retry.should_retry(response.status_code):
                 last_error = CapellaAPIError.from_response(response)
+                allowed = self._retry.attempts_for(response.status_code)
                 log.warning(
                     "capella %s %s -> %s (attempt %d/%d)",
                     method,
                     path,
                     response.status_code,
                     attempt,
-                    attempts,
+                    allowed,
                 )
-                if attempt == attempts:
+                if attempt >= allowed:
                     break
                 delay = self._retry.delay_for(attempt, response.headers.get("Retry-After"))
                 await self._sleep(delay)

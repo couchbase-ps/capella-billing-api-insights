@@ -117,7 +117,7 @@ async def test_5xx_is_retried_with_backoff() -> None:
     assert client.requests_made == 3
 
 
-async def test_gives_up_after_five_attempts() -> None:
+async def test_5xx_gives_up_after_three_attempts() -> None:
     clock = FakeClock()
     with respx.mock(base_url=BASE) as router:
         route = router.get("/v4/organizations").mock(
@@ -127,7 +127,7 @@ async def test_gives_up_after_five_attempts() -> None:
             with pytest.raises(CapellaAPIError) as info:
                 await client.list_organizations()
     assert info.value.http_status == 500
-    assert route.call_count == 5
+    assert route.call_count == 3
 
 
 async def test_401_raises_api_error_without_retry() -> None:

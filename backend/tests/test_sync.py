@@ -13,7 +13,7 @@ from insights.config import Settings
 from insights.store import repo
 from insights.store.db import Database
 from insights.sync.runner import SyncAlreadyRunning, SyncNotConfigured, SyncRunner
-from tests.conftest import ANALYTICS_EU, APP_SERVICE, FREE_TRIAL, PROD_EU
+from tests.conftest import ANALYTICS_EU, APP_SERVICE, DEV_SANDBOX, FREE_TRIAL, PROD_EU
 
 
 async def test_full_sync_populates_store(
@@ -29,6 +29,10 @@ async def test_full_sync_populates_store(
         assert len(repo.list_buckets(conn, PROD_EU)) == 3
         assert repo.list_buckets(conn, FREE_TRIAL) == []
         assert repo.get_cluster(conn, FREE_TRIAL).free_tier is True
+        # dev-sandbox is turnedOff: Capella answers 500 to listBuckets, so it is skipped
+        assert repo.list_buckets(conn, DEV_SANDBOX) == []
+        runs = repo.list_sync_runs(conn)
+        assert runs[0].detail["bucketsSkipped"] == 1
         assert [e["name"] for e in repo.list_app_endpoints(conn, APP_SERVICE)] == [
             "inventory",
             "travel",
@@ -50,6 +54,7 @@ async def test_full_sync_populates_store(
     assert run is not None and run.status == "success"
     assert run.detail == {
         "clustersSynced": 4,
+        "bucketsSkipped": 1,
         "appServicesSynced": 1,
         "analyticsClustersSynced": 1,
         "billingWindows": 2,
@@ -64,10 +69,10 @@ async def test_second_sync_only_refreshes_trailing_window(
     before = mock_client.requests_made
     run = await runner.run()
     assert run.status == "success"
-    # inventory: orgs + projects + 2 cluster lists + 3 bucket lists + app services + endpoints
-    # + 2 analytics lists = 11; one September window: org + 3 clusters + app service + analytics
-    # + payg = 7; prepaid = 1
-    assert mock_client.requests_made - before == 11 + 7 + 1
+    # inventory: orgs + projects + 2 cluster lists + 2 bucket lists (dev-sandbox is turned off
+    # and skipped) + app services + endpoints + 2 analytics lists = 10; one September window:
+    # org + 3 clusters + app service + analytics + payg = 7; prepaid = 1
+    assert mock_client.requests_made - before == 10 + 7 + 1
     with synced_db.session() as conn:
         assert repo.last_synced_day(conn, "org") == date(2026, 9, 21)
         assert len(repo.list_sync_runs(conn)) == 2

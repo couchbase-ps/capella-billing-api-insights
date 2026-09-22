@@ -35,6 +35,24 @@ class Failure:
         return {"scope": self.scope, "instanceId": self.instance_id, "message": self.message}
 
 
+#: Cluster states in which Capella cannot reach the nodes; ``listBuckets`` answers 500 for them.
+NOT_RUNNING_STATES = frozenset(
+    {
+        "draft",
+        "deploying",
+        "deploymentFailed",
+        "destroying",
+        "destroyFailed",
+        "turnedOff",
+        "turningOff",
+        "turningOffFailed",
+        "turningOn",
+        "turningOnFailed",
+        "offline",
+    }
+)
+
+
 @dataclass
 class Inventory:
     """Everything the billing sync and the store need, as fetched from Capella."""
@@ -47,6 +65,7 @@ class Inventory:
     endpoints: dict[str, list[AppEndpoint]] = field(default_factory=dict)
     analytics: list[tuple[str, AnalyticsCluster]] = field(default_factory=list)
     failures: list[Failure] = field(default_factory=list)
+    buckets_skipped: list[str] = field(default_factory=list)  # cluster ids not running
 
     @property
     def billable_clusters(self) -> list[tuple[str, Cluster]]:
@@ -81,6 +100,11 @@ async def fetch_inventory(client: CapellaSource, settings: Settings) -> Inventor
         inv.clusters.extend((project.id, c) for c in clusters)
         for cluster in clusters:
             if cluster.is_free_tier:
+                continue
+            if cluster.current_state in NOT_RUNNING_STATES:
+                # Not a failure: the cluster is off, so there is nothing to list (and Capella
+                # would answer 500). The previous bucket snapshot, if any, is kept by the store.
+                inv.buckets_skipped.append(cluster.id)
                 continue
             try:
                 inv.buckets[cluster.id] = await client.list_buckets(project.id, cluster.id)

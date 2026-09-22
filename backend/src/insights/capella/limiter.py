@@ -86,6 +86,9 @@ class RetryPolicy:
     """Exponential backoff with jitter; ``Retry-After`` wins when the server sends one."""
 
     max_attempts: int = 5
+    #: 5xx answers from Capella are usually deterministic (e.g. bucket listing on a turned-off
+    #: cluster), so they get fewer attempts than 429s, which are worth waiting out.
+    max_attempts_5xx: int = 3
     base_delay: float = 0.5
     max_delay: float = 30.0
     jitter: float = 0.25
@@ -101,3 +104,7 @@ class RetryPolicy:
 
     def should_retry(self, status: int) -> bool:
         return status == 429 or 500 <= status <= 599
+
+    def attempts_for(self, status: int) -> int:
+        """How many attempts in total a response with ``status`` deserves."""
+        return self.max_attempts if status == 429 else min(self.max_attempts, self.max_attempts_5xx)

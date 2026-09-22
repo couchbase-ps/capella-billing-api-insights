@@ -123,4 +123,4 @@ CSV: `text/csv` with `Content-Disposition: attachment; filename=<key>-<from>_to_
 ## Sync
 
 `POST /api/sync` → `202 {"runId":4,"status":"running"}` or `409 {"error":{"code":"sync_running",...}}`
-`GET /api/sync/status` → `{"running":false,"runs":[{"id","startedAt","finishedAt","status","requestsMade","error","detail":{"clustersSynced":5,"appServicesSynced":1,"analyticsClustersSynced":1,"billingWindows":6,"failures":[{"scope":"cluster","instanceId":"..","message":".."}]}}]}` (last 10 runs, newest first)
+`GET /api/sync/status` → `{"running":false,"runs":[{"id","startedAt","finishedAt","status","requestsMade","error","detail":{"clustersSynced":5,"bucketsSkipped":2,"appServicesSynced":1,"analyticsClustersSynced":1,"billingWindows":6,"failures":[{"scope":"cluster","instanceId":"..","message":".."}]}}]}` (last 10 runs, newest first)

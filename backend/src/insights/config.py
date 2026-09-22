@@ -32,6 +32,18 @@ class Settings(BaseSettings):
         return value
 
     @property
+    def effective_db_path(self) -> str:
+        """The SQLite file to open: mock mode gets its own ``*-mock.db`` next to ``db_path``.
+
+        A demo run must never mix fixture rows with a real organization's data on the same
+        Docker volume.
+        """
+        if not self.capella_mock:
+            return self.db_path
+        root, dot, ext = self.db_path.rpartition(".")
+        return f"{root}-mock.{ext}" if dot and "/" not in ext else f"{self.db_path}-mock"
+
+    @property
     def configured(self) -> bool:
         """True when a sync can run: either mock mode or an API key is present."""
         return self.capella_mock or self.capella_api_key is not None

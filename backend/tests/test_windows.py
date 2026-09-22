@@ -67,3 +67,17 @@ def test_sync_range_end_is_yesterday() -> None:
 
 def test_sync_range_nothing_to_do() -> None:
     assert sync_range(date(2026, 9, 22), date(2026, 9, 21), 0, 0) is None
+
+
+def test_mock_mode_uses_its_own_database_file() -> None:
+    from insights.config import Settings
+
+    assert Settings(capella_mock=False, db_path="/data/insights.db").effective_db_path == (
+        "/data/insights.db"
+    )
+    assert Settings(capella_mock=True, db_path="/data/insights.db").effective_db_path == (
+        "/data/insights-mock.db"
+    )
+    assert Settings(capella_mock=True, db_path="/data/insights").effective_db_path == (
+        "/data/insights-mock"
+    )

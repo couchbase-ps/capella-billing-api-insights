@@ -131,6 +131,7 @@ class SyncRunner:
         try:
             inventory = await sync_inventory(client, self.db, self.settings, now)
             detail["clustersSynced"] = len(inventory.clusters)
+            detail["bucketsSkipped"] = len(inventory.buckets_skipped)
             detail["appServicesSynced"] = len(inventory.app_services)
             detail["analyticsClustersSynced"] = len(inventory.analytics)
             failures = list(inventory.failures)

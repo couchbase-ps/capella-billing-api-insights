@@ -37,7 +37,10 @@ CAPELLA_MOCK=true docker compose up --build
 ```
 
 serves deterministic fixtures (2 projects, 4 clusters, 1 Analytics cluster, 1 App Service, 90 days of synthetic
-credits) so the UI and the report engine can be explored offline.
+credits) so the UI and the report engine can be explored offline. Mock mode writes to its own
+`insights-mock.db` file on the volume, so it never mixes with a real organization's data. To
+wipe everything (for example after pointing the stack at a different organization), run
+`docker compose down -v`.
 
 ## What it extracts and how
 
@@ -57,7 +60,8 @@ the full endpoint analysis. In short:
   from the Analytics API using the same key, all mapped to the topology-ui document.
 
 Rate limit is 100 requests/minute per key; the client uses a token bucket at 80/min plus
-retry with backoff on 429/5xx. Billing data lags up to a few days, so every sync re-fetches
+retry with backoff on 429 (5 attempts) and 5xx (3 attempts). Bucket listing is skipped for
+clusters that are turned off or otherwise not running, because Capella answers 500 for them. Billing data lags up to a few days, so every sync re-fetches
 a trailing window (default 7 days).
 
 ## Custom reports

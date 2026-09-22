@@ -55,7 +55,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        database = db or Database(cfg.db_path)
+        database = db or Database(cfg.effective_db_path)
         database.init_schema()
         with database.session() as conn:
             repo.mark_stale_runs_failed(conn, utc_now_iso())
