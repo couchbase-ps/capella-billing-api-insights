@@ -30,17 +30,20 @@ def _resources(compute: dict[str, Any] | None) -> dict[str, Any]:
     return {"cpus": cpu if cpu is not None else absent(), "memory": memory_gb(compute.get("ram"))}
 
 
-def _disk_suffix(disk: dict[str, Any] | None) -> str:
+def _node_name(services_label: str, disk: dict[str, Any] | None) -> str:
+    """Short tile label: the disk size and type (``100GB gp3``) when known, else the services.
+
+    topology-ui middle-elides long node names, so the label must stay under ~12 characters;
+    the services are already drawn on the tile.
+    """
     if not disk:
-        return ""
+        return services_label
     parts: list[str] = []
+    if disk.get("storage") is not None:
+        parts.append(f"{disk['storage']}GB")
     if disk.get("type"):
         parts.append(str(disk["type"]))
-    if disk.get("storage") is not None:
-        parts.append(f"{disk['storage']} GB")
-    if disk.get("iops") is not None:
-        parts.append(f"{disk['iops']} IOPS")
-    return f" ({', '.join(parts)})" if parts else ""
+    return " ".join(parts) if parts else services_label
 
 
 def _service_label(service: str) -> str:
@@ -57,7 +60,7 @@ def _server_group(group: dict[str, Any], status: str) -> dict[str, Any]:
         "status": status,
         "nodes": [
             {
-                "name": f"{name}{_disk_suffix(node.get('disk'))}",
+                "name": _node_name(name, node.get("disk")),
                 "resources": _resources(node.get("compute")),
                 "services": [_service_label(s) for s in services],
                 "status": status,
@@ -111,8 +114,7 @@ def _cluster_resources(groups: list[dict[str, Any]]) -> dict[str, Any]:
 def _mobile(app_service: dict[str, Any], endpoints: list[dict[str, Any]]) -> dict[str, Any]:
     status = status_of(app_service.get("currentState"))
     nodes = app_service.get("nodes")
-    return {
-        "version": app_service.get("version") or absent(),
+    mobile: dict[str, Any] = {
         "status": status,
         "resources": _resources(app_service.get("compute")),
         "groups": [
@@ -133,6 +135,9 @@ def _mobile(app_service: dict[str, Any], endpoints: list[dict[str, Any]]) -> dic
         ],
         "databases": [{"name": e.get("name")} for e in endpoints],
     }
+    if app_service.get("version"):
+        mobile["version"] = app_service["version"]
+    return mobile
 
 
 def cluster_to_topology(
@@ -150,12 +155,15 @@ def cluster_to_topology(
     groups = list(cluster.get("serviceGroups") or [])
     doc: dict[str, Any] = {
         "name": cluster.get("name"),
-        "version": (cluster.get("couchbaseServer") or {}).get("version") or absent(),
         "status": status,
         "resources": _cluster_resources(groups),
         "serverGroups": [_server_group(g, status) for g in groups],
         "buckets": [_bucket(b) for b in buckets],
     }
+    version = (cluster.get("couchbaseServer") or {}).get("version")
+    if version:
+        # topology-ui prints "v" + version verbatim, so an unknown version is omitted, not absent().
+        doc["version"] = version
     if app_service is not None:
         doc["mobile"] = _mobile(app_service, endpoints or [])
     return doc
@@ -171,7 +179,6 @@ def analytics_to_topology(cluster: dict[str, Any]) -> dict[str, Any]:
     total_ram = (nodes or 0) * (compute.get("ram") or 0)
     return {
         "name": cluster.get("name"),
-        "version": absent(),
         "status": status,
         "resources": {"cpus": total_cpus, "memory": memory_gb(total_ram)} if nodes else resources,
         "serverGroups": [

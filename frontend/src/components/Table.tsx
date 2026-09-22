@@ -43,14 +43,16 @@ export function Td({
   children,
   num = false,
   muted = false,
+  nowrap = false,
 }: {
   children: ReactNode;
   num?: boolean;
   muted?: boolean;
+  nowrap?: boolean;
 }): JSX.Element {
   return (
     <td
-      className={`border-b border-border px-2 py-1.5 ${num ? "text-right tabular-nums" : ""} ${muted ? "text-text-muted" : ""}`}
+      className={`border-b border-border px-2 py-1.5 ${num ? "text-right tabular-nums" : ""} ${muted ? "text-text-muted" : ""} ${nowrap ? "whitespace-nowrap" : ""}`}
     >
       {children}
     </td>

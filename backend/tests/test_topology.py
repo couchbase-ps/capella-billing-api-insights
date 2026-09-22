@@ -29,7 +29,7 @@ def test_prod_eu_with_app_service() -> None:
     assert [g["name"] for g in doc["serverGroups"]] == ["data", "query/index"]
     data_node = doc["serverGroups"][0]["nodes"][0]
     assert data_node == {
-        "name": "data (gp3, 100 GB, 3000 IOPS)",
+        "name": "100GB gp3",
         "resources": {"cpus": 4, "memory": "16 GB"},
         "services": ["Data"],
         "status": "HEALTHY",
@@ -71,7 +71,7 @@ def test_turned_off_cluster_without_app_service() -> None:
     assert doc["status"] == "TURNEDOFF"
     assert "mobile" not in doc
     assert doc["serverGroups"][0]["name"] == "data/query/index/search"
-    assert doc["serverGroups"][0]["nodes"][0]["name"] == "data/query/index/search (P10, 128 GB)"
+    assert doc["serverGroups"][0]["nodes"][0]["name"] == "128GB P10"
     assert doc["buckets"][0]["ratio"] == 0.05
 
 
@@ -84,7 +84,7 @@ def test_absent_figures() -> None:
         },
         [{"name": "b"}],
     )
-    assert doc["version"] == absent()
+    assert "version" not in doc  # topology-ui would print "v[object Object]" for an absent figure
     assert doc["status"] == "UNKNOWN"
     node = doc["serverGroups"][0]["nodes"][0]
     assert node["resources"] == {"cpus": absent(), "memory": absent()}

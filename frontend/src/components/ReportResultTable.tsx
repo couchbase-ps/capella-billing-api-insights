@@ -36,7 +36,7 @@ export function ReportResultTable({ result }: { result: ReportResult }): JSX.Ele
   const renderRow = (row: ReportRow, key: string) => (
     <tr key={key}>
       {result.columns.map((column) => (
-        <Td key={column.key} num={numeric(column)}>
+        <Td key={column.key} num={numeric(column)} nowrap={!numeric(column)}>
           {cell(column, row[column.key])}
         </Td>
       ))}
