@@ -2,7 +2,8 @@
 
 Custom credit-consumption reports and insights for one Couchbase Capella organization,
 built on the public [Capella Management API v4.0](https://docs.couchbase.com/cloud/management-api-reference/index.html)
-Billing endpoints, with cluster and App Service configurations rendered by
+Billing endpoints and the [Capella Analytics Management API](https://docs.couchbase.com/analytics/management-api-reference/index.html),
+with operational cluster, Analytics (Columnar) cluster and App Service configurations rendered by
 [`@couchbaselabs/topology-ui`](https://github.com/couchbaselabs/topology-ui).
 
 One Capella API key = one organization = one billing account. The key must carry the
@@ -33,7 +34,7 @@ The first start backfills the last 90 days of billing (configurable) and re-sync
 CAPELLA_MOCK=true docker compose up --build
 ```
 
-serves deterministic fixtures (2 projects, 4 clusters, 1 App Service, 90 days of synthetic
+serves deterministic fixtures (2 projects, 4 clusters, 1 Analytics cluster, 1 App Service, 90 days of synthetic
 credits) so the UI and the report engine can be explored offline.
 
 ## What it extracts and how
@@ -42,7 +43,7 @@ See [docs/capella-management-api-analysis.md](docs/capella-management-api-analys
 the full endpoint analysis. In short:
 
 - **Per-instance daily credits**: `POST /v4/organizations/{org}/billing` (categorized
-  billing) once per calendar month per cluster / App Service with
+  billing) once per calendar month per operational cluster / Analytics cluster / App Service with
   `filters.instanceIds=[id]`. Capella only returns daily periods when the requested range is
   within one month, so the sync splits ranges on month boundaries.
 - **Org roll-up**: the same call without filters, so unattributed spend
@@ -50,7 +51,8 @@ the full endpoint analysis. In short:
 - **Prepaid credits**: `GET .../billing/prePaidCredits` (blocks with total/used/remaining/expiry).
 - **Pay-as-you-go**: `GET .../billing/payAsYouGo`.
 - **Inventory**: organizations, projects, clusters (service groups, node sizes, disks),
-  buckets, App Services and App Endpoints, mapped to the topology-ui document.
+  buckets, App Services and App Endpoints, plus Analytics clusters (nodes, compute, plan)
+  from the Analytics API using the same key, all mapped to the topology-ui document.
 
 Rate limit is 100 requests/minute per key; the client uses a token bucket at 80/min plus
 retry with backoff on 429/5xx. Billing data lags up to a few days, so every sync re-fetches
