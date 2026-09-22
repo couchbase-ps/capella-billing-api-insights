@@ -23,7 +23,7 @@ def test_consumption_summary_json(client: TestClient) -> None:
     body = client.get(
         "/api/reports/consumption-summary", params={"from": "2026-09-01", "to": "2026-09-21"}
     ).json()
-    assert set(body) == {"key", "title", "from", "to", "columns", "rows", "totals"}
+    assert set(body) == {"key", "title", "from", "to", "columns", "rows", "totals", "meta"}
     assert body["key"] == "consumption-summary"
     assert (body["from"], body["to"]) == ("2026-09-01", "2026-09-21")
     assert [c["key"] for c in body["columns"]] == [
@@ -66,7 +66,7 @@ def test_cluster_daily_json_and_csv(client: TestClient) -> None:
     reader = list(csv.reader(io.StringIO(response.text)))
     assert reader[0] == ["Day", "Cluster", "Scope", "Category", "Credits", "Currency"]
     assert len(reader) == 1 + 9 + 1
-    assert reader[-1][0] == "TOTAL" and reader[-1][5] == ""
+    assert reader[-1][0] == "Total" and reader[-1][5] == ""
 
 
 def test_cluster_daily_resolves_analytics_id(client: TestClient) -> None:
@@ -95,7 +95,7 @@ def test_registry_extension_point() -> None:
         return ReportResult(
             columns=[ReportColumn("a", "A", "string"), ReportColumn("n", "N", "number")],
             rows=[{"a": "x, y", "n": 1.5}],
-            totals={"n": 1.5},
+            totals={"a": "Total", "n": 1.5},
         )
 
     registry.register(ReportDefinition("custom", "Custom", "d", (), run))
@@ -105,5 +105,5 @@ def test_registry_extension_point() -> None:
     result = definition.run(
         ReportContext(conn=None, date_from=date(2026, 1, 1), date_to=date(2026, 1, 2))
     )  # type: ignore[arg-type]
-    assert result_to_csv(result) == 'A,N\n"x, y",1.5\nTOTAL,1.5\n'
+    assert result_to_csv(result) == 'A,N\n"x, y",1.5\nTotal,1.5\n'
     assert registry.get("missing") is None
