@@ -1,0 +1,52 @@
+# Capella Billing API Insights — local stack.
+#   docker compose up --build                       # real Capella (needs CAPELLA_API_KEY in .env)
+#   CAPELLA_MOCK=true docker compose up --build     # fixture-backed demo, no key needed
+name: capella-billing-api-insights
+
+x-backend-env: &backend-env
+  CAPELLA_API_KEY: ${CAPELLA_API_KEY:-}
+  CAPELLA_BASE_URL: ${CAPELLA_BASE_URL:-https://cloudapi.cloud.couchbase.com}
+  CAPELLA_ORG_ID: ${CAPELLA_ORG_ID:-}
+  SYNC_BACKFILL_DAYS: ${SYNC_BACKFILL_DAYS:-90}
+  SYNC_REFRESH_DAYS: ${SYNC_REFRESH_DAYS:-7}
+  SYNC_ON_START: ${SYNC_ON_START:-true}
+  SYNC_INTERVAL_MINUTES: ${SYNC_INTERVAL_MINUTES:-360}
+  RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-80}
+  DB_PATH: /data/insights.db
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      <<: *backend-env
+      CAPELLA_MOCK: ${CAPELLA_MOCK:-false}
+    ports:
+      - "8000:8000"
+    volumes:
+      - insights-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3); sys.exit(0 if r.status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      # Vite proxies /api and /health to this URL; the browser talks to :5173 only.
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+    ports:
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+volumes:
+  insights-data:
