@@ -56,6 +56,7 @@ async def test_full_sync_populates_store(
         "clustersSynced": 4,
         "bucketsSkipped": 1,
         "endpointsSkipped": 0,
+        "analyticsAttribution": "project-weighted-by-size",
         "appServicesSynced": 1,
         "analyticsClustersSynced": 1,
         "billingWindows": 2,

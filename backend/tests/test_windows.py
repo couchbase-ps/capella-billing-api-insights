@@ -81,3 +81,28 @@ def test_mock_mode_uses_its_own_database_file() -> None:
     assert Settings(capella_mock=True, db_path="/data/insights").effective_db_path == (
         "/data/insights-mock"
     )
+
+
+def test_split_rows_shares_project_analytics_spend_by_size() -> None:
+    from datetime import date as _date
+
+    from insights.store import repo
+    from insights.sync.billing import split_rows
+
+    rows = [
+        repo.UsageRow(
+            day=_date(2026, 8, 1),
+            scope="analytics",
+            instance_id="",
+            category="analyticsCompute",
+            credit_spend=100.0,
+            currency_spend=None,
+            currency="USD",
+        )
+    ]
+    parts = split_rows(rows, {"big": 3.0, "small": 1.0})
+    assert parts["big"][0].credit_spend == 75.0
+    assert parts["small"][0].credit_spend == 25.0
+    assert parts["big"][0].instance_id == "big"
+    single = split_rows(rows, {"only": 8.0})
+    assert single["only"][0].credit_spend == 100.0

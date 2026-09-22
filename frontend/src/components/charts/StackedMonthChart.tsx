@@ -18,19 +18,24 @@ export interface StackedSeries {
   color: string;
 }
 
-export type StackedRow = { month: string } & Record<string, number | string | null>;
+export type StackedRow = { x: string } & Record<string, number | string | null>;
 
-/** One stacked bar per month; the series are whatever the caller pivoted (categories, plans, clusters). */
+/**
+ * One stacked bar per x value (a month, a day or an instance); the series are whatever the
+ * caller pivoted (categories, plans, clusters).
+ */
 export function StackedMonthChart({
   rows,
   series,
   height = 220,
   testId = "stacked-month-chart",
+  xFormatter = formatPeriod,
 }: {
   rows: StackedRow[];
   series: StackedSeries[];
   height?: number;
   testId?: string;
+  xFormatter?: (value: string) => string;
 }): JSX.Element {
   if (rows.length === 0 || series.length === 0) {
     return (
@@ -48,8 +53,10 @@ export function StackedMonthChart({
         >
           <CartesianGrid vertical={false} stroke="#e6e6e6" />
           <XAxis
-            dataKey="month"
-            tickFormatter={formatPeriod}
+            dataKey="x"
+            tickFormatter={xFormatter}
+            interval="preserveStartEnd"
+            minTickGap={16}
             tick={{ fontSize: 11, fill: "#5c5c5c" }}
             axisLine={{ stroke: "#e6e6e6" }}
             tickLine={false}
@@ -63,7 +70,7 @@ export function StackedMonthChart({
           />
           <Tooltip
             cursor={{ fill: "rgba(0,0,0,0.04)" }}
-            labelFormatter={(label) => formatPeriod(String(label))}
+            labelFormatter={(label) => xFormatter(String(label))}
             formatter={(value, name) => [
               formatCredits(Number(value)),
               labelOf.get(String(name)) ?? String(name),

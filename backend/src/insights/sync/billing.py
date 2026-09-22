@@ -8,13 +8,19 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from insights.capella.client import CapellaSource
-from insights.capella.models import CategorizedBilling
+from insights.capella.models import AnalyticsCluster, CategorizedBilling
 from insights.store import repo
 from insights.store.db import Database
 from insights.sync.inventory import Failure, Inventory
 from insights.sync.windows import month_windows
 
 log = logging.getLogger(__name__)
+
+#: Capella ignores Analytics cluster ids in ``filters.instanceIds`` (200 with no periods), but
+#: honours ``filters.projectIds`` combined with the analytics categories. Analytics spend is
+#: therefore fetched per project and shared between that project's Analytics clusters.
+ANALYTICS_CATEGORIES = ("analyticsCompute", "analyticsStorage", "analyticsClusterBackup")
+ANALYTICS_ATTRIBUTION = "project-weighted-by-size"
 
 
 @dataclass
@@ -49,6 +55,40 @@ def rows_from_billing(
                 )
             )
     return rows
+
+
+def analytics_weights(clusters: list[AnalyticsCluster]) -> dict[str, float]:
+    """Share of a project's Analytics spend per cluster: proportional to ``nodes * cpu``.
+
+    One cluster in the project gets everything (exact). Several clusters get a size-weighted
+    estimate, which is the best the API allows today.
+    """
+    return {c.id: float(max(c.nodes, 1) * max(c.compute.cpu, 1)) for c in clusters}
+
+
+def split_rows(
+    rows: list[repo.UsageRow], weights: dict[str, float]
+) -> dict[str, list[repo.UsageRow]]:
+    """Distribute project-level rows across instances according to ``weights``."""
+    total = sum(weights.values())
+    out: dict[str, list[repo.UsageRow]] = {instance_id: [] for instance_id in weights}
+    for instance_id, weight in weights.items():
+        share = weight / total if total else 1.0 / max(len(weights), 1)
+        for row in rows:
+            out[instance_id].append(
+                repo.UsageRow(
+                    day=row.day,
+                    scope=row.scope,
+                    instance_id=instance_id,
+                    category=row.category,
+                    credit_spend=None if row.credit_spend is None else row.credit_spend * share,
+                    currency_spend=(
+                        None if row.currency_spend is None else row.currency_spend * share
+                    ),
+                    currency=row.currency,
+                )
+            )
+    return out
 
 
 def _store_rows(
@@ -87,6 +127,31 @@ async def _sync_instance(
         outcome.failures.append(Failure(scope, instance_id, f"{lo}..{hi}: {exc}"))
 
 
+async def _sync_analytics_project(
+    client: CapellaSource,
+    db: Database,
+    project_id: str,
+    clusters: list[AnalyticsCluster],
+    lo: date,
+    hi: date,
+    now: str,
+    outcome: BillingOutcome,
+) -> None:
+    try:
+        billing = await client.categorized_billing(
+            lo, hi, project_ids=[project_id], categories=list(ANALYTICS_CATEGORIES)
+        )
+        rows = rows_from_billing("analytics", "", billing)
+        for instance_id, part in split_rows(rows, analytics_weights(clusters)).items():
+            outcome.rows_written += await asyncio.to_thread(
+                _store_rows, db, "analytics", instance_id, lo, hi, part, now
+            )
+    except Exception as exc:
+        log.warning("analytics billing project %s %s..%s failed: %s", project_id, lo, hi, exc)
+        for cluster in clusters:
+            outcome.failures.append(Failure("analytics", cluster.id, f"{lo}..{hi}: {exc}"))
+
+
 async def sync_billing(
     client: CapellaSource,
     db: Database,
@@ -104,8 +169,11 @@ async def sync_billing(
             await _sync_instance(client, db, "cluster", cluster.id, lo, hi, now, outcome)
         for service in inventory.app_services:
             await _sync_instance(client, db, "appservice", service.id, lo, hi, now, outcome)
-        for _, analytics in inventory.analytics:
-            await _sync_instance(client, db, "analytics", analytics.id, lo, hi, now, outcome)
+        by_project: dict[str, list[AnalyticsCluster]] = {}
+        for project_id, analytics in inventory.analytics:
+            by_project.setdefault(project_id, []).append(analytics)
+        for project_id, clusters in by_project.items():
+            await _sync_analytics_project(client, db, project_id, clusters, lo, hi, now, outcome)
         try:
             payg = await client.pay_as_you_go(lo, hi)
             await asyncio.to_thread(_store_payg, db, payg.periods, payg.billing_currency, now)

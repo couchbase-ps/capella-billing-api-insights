@@ -193,13 +193,15 @@ Analytics cluster shape: `id`, `name`, `cloudProvider` (string), `region`, `node
 There are no service groups, buckets or versions in the API response.
 
 **Billing.** The categorized billing categories `analyticsCompute`, `analyticsStorage` and
-`analyticsClusterBackup` carry Analytics spend, and the Capella UI's usage report filters by
-"Analytics clusters", so the sync requests `categorizedBilling` with
-`filters.instanceIds=[analyticsClusterId]` per month exactly like operational clusters
-(scope `analytics`). The spec's `instanceIds` description lists cluster, App Service and AI
-ids without naming Analytics explicitly; if Capella rejects an Analytics id the failure is
-recorded per instance in the sync run and the org-level roll-up (which always includes the
-three analytics categories) still shows the Analytics total as unattributed spend. The
+`analyticsClusterBackup` carry Analytics spend. Verified against a live organization on
+2026-09-22: `filters.instanceIds=[analyticsClusterId]` is **silently ignored** (HTTP 200,
+zero periods), while `filters.projectIds=[projectId]` combined with
+`filters.categories=[analyticsCompute, analyticsStorage, analyticsClusterBackup]` returns the
+project's Analytics spend per day. The sync therefore fetches Analytics spend **per project**
+and attributes it to that project's Analytics clusters: exactly when the project has one,
+otherwise proportionally to `nodes × cpu` (recorded as `analyticsAttribution:
+project-weighted-by-size` in the sync detail). Analytics clusters destroyed before the sync
+still count towards the project figure, so a surviving cluster can be over-attributed. The
 itemized-per-cluster endpoint is operational-only and is not used for Analytics.
 
 **Topology.** An Analytics cluster renders as one server group named `analytics` with one

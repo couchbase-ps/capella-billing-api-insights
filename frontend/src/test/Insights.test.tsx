@@ -53,11 +53,16 @@ describe("Insights", () => {
     expect(screen.getByTestId("stacked-month-chart")).toBeInTheDocument();
     expect(screen.getAllByText("Total").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Jul 2026").length).toBeGreaterThanOrEqual(1);
-    const links = screen.getAllByRole("link", { name: /Download CSV/ });
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAttribute(
+    fireEvent.click(screen.getByRole("button", { name: /Download as/ }));
+    const csv = screen.getByRole("menuitem", { name: "CSV" });
+    expect(csv).toHaveAttribute(
       "href",
       expect.stringContaining("/api/reports/credits-by-category?"),
+    );
+    expect(csv).toHaveAttribute("href", expect.stringContaining("format=csv"));
+    expect(screen.getByRole("menuitem", { name: "Excel" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("format=xlsx"),
     );
     expect(screen.queryByText("Cluster Instance Name")).not.toBeInTheDocument();
 

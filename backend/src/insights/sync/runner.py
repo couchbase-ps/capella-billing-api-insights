@@ -12,7 +12,7 @@ from insights.capella.client import CapellaSource
 from insights.config import Settings
 from insights.store import repo
 from insights.store.db import Database
-from insights.sync.billing import sync_billing
+from insights.sync.billing import ANALYTICS_ATTRIBUTION, sync_billing
 from insights.sync.inventory import sync_inventory
 from insights.sync.windows import sync_range
 
@@ -133,6 +133,7 @@ class SyncRunner:
             detail["clustersSynced"] = len(inventory.clusters)
             detail["bucketsSkipped"] = len(inventory.buckets_skipped)
             detail["endpointsSkipped"] = len(inventory.endpoints_skipped)
+            detail["analyticsAttribution"] = ANALYTICS_ATTRIBUTION
             detail["appServicesSynced"] = len(inventory.app_services)
             detail["analyticsClustersSynced"] = len(inventory.analytics)
             failures = list(inventory.failures)

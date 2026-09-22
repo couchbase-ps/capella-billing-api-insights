@@ -107,3 +107,24 @@ def test_registry_extension_point() -> None:
     )  # type: ignore[arg-type]
     assert result_to_csv(result) == 'A,N\n"x, y",1.5\nTotal,1.5\n'
     assert registry.get("missing") is None
+
+
+def test_report_xlsx_download(client) -> None:  # type: ignore[no-untyped-def]
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    response = client.get(
+        "/api/reports/credits-by-plan",
+        params={"from": "2026-08-01", "to": "2026-08-31", "format": "xlsx"},
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/vnd.openxmlformats")
+    assert (
+        "credits-by-plan-2026-08-01_to_2026-08-31.xlsx" in response.headers["content-disposition"]
+    )
+    book = load_workbook(BytesIO(response.content))
+    sheet = book.active
+    header = [c.value for c in sheet[1]]
+    assert header[:2] == ["Month", "Credit Plan"]
+    assert sheet[sheet.max_row][0].value == "Total"

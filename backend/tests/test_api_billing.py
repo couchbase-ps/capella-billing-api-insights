@@ -142,6 +142,7 @@ def test_sync_status_and_trigger(client: TestClient) -> None:
         "clustersSynced",
         "bucketsSkipped",
         "endpointsSkipped",
+        "analyticsAttribution",
         "appServicesSynced",
         "analyticsClustersSynced",
         "billingWindows",

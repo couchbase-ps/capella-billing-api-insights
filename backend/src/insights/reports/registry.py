@@ -142,6 +142,52 @@ def result_to_csv(result: ReportResult) -> str:
     return buffer.getvalue()
 
 
+def result_to_xlsx(result: ReportResult, title: str = "Report") -> bytes:
+    """Serialise the report as a single-sheet workbook: bold header, numeric cells, Total row."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    from openpyxl.utils import get_column_letter
+
+    book = Workbook()
+    sheet = book.active
+    sheet.title = title[:31] or "Report"
+    sheet.append([c.label for c in result.columns])
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+    numeric = {c.key for c in result.columns if c.type in ("number", "credits", "currency")}
+    for row in result.rows:
+        sheet.append([_xlsx_cell(row.get(c.key), c.key in numeric) for c in result.columns])
+    if result.totals:
+        sheet.append(
+            [_xlsx_cell(result.totals.get(c.key), c.key in numeric) for c in result.columns]
+        )
+        for cell in sheet[sheet.max_row]:
+            cell.font = Font(bold=True)
+    for index, column in enumerate(result.columns, start=1):
+        width = max(len(column.label), 10)
+        for row in sheet.iter_rows(min_col=index, max_col=index, min_row=2):
+            for cell in row:
+                if cell.value is not None:
+                    width = max(width, min(len(str(cell.value)), 48))
+        sheet.column_dimensions[get_column_letter(index)].width = width + 2
+        if column.key in numeric:
+            for row in sheet.iter_rows(min_col=index, max_col=index, min_row=2):
+                for cell in row:
+                    cell.number_format = "#,##0.00"
+    sheet.freeze_panes = "A2"
+    buffer = io.BytesIO()
+    book.save(buffer)
+    return buffer.getvalue()
+
+
+def _xlsx_cell(value: Any, numeric: bool) -> Any:
+    if value is None:
+        return None
+    if numeric:
+        return round(float(value), 4) if isinstance(value, (int, float)) else value
+    return value
+
+
 def _cell(value: Any) -> str:
     if value is None:
         return ""

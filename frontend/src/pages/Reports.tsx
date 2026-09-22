@@ -1,13 +1,16 @@
-import { Download } from "lucide-react";
 import type { JSX } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { buildUrl } from "../api/client";
 import { useAnalyticsClusters, useClusters, useReport, useReports } from "../api/hooks";
 import type { ReportDefinition, ReportParam } from "../api/types";
+import { StackedMonthChart } from "../components/charts/StackedMonthChart";
+import { DownloadMenu } from "../components/DownloadMenu";
 import { ReportResultTable } from "../components/ReportResultTable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { Card, EmptyNote, ErrorNote, LoadingRow, PageHeader } from "../components/ui";
+import { formatDate, formatPeriod } from "../lib/dates";
 import { reportDefaultRange } from "../lib/months";
+import { summarize } from "../lib/reportSummary";
 
 const INPUT = "rounded-sm border border-border-strong px-2 py-1 text-body-sm";
 
@@ -94,22 +97,20 @@ function ReportResult({
   const missing = report.params.filter((param) => param.required && !params[param.name]);
   const ready = missing.length === 0;
   const result = useReport(ready ? report.key : null, params);
-  const csvHref = ready
-    ? buildUrl(`/api/reports/${encodeURIComponent(report.key)}`, { ...params, format: "csv" })
-    : null;
+  const download = (format: string) =>
+    buildUrl(`/api/reports/${encodeURIComponent(report.key)}`, { ...params, format });
+  const summary = useMemo(() => (result.data ? summarize(result.data) : null), [result.data]);
   return (
     <Card
       title={report.title}
       action={
-        csvHref && (
-          <a
-            href={csvHref}
-            download
-            className="inline-flex items-center gap-1 rounded-sm border border-border px-2.5 py-1 text-label-sm hover:bg-surface-alt"
-          >
-            <Download size={14} aria-hidden="true" />
-            Download CSV
-          </a>
+        ready && (
+          <DownloadMenu
+            options={[
+              { label: "CSV", href: download("csv") },
+              { label: "Excel", href: download("xlsx") },
+            ]}
+          />
         )
       }
     >
@@ -125,6 +126,21 @@ function ReportResult({
       )}
       {ready && result.isFetching && <LoadingRow label="Running report…" />}
       {ready && result.isError && <ErrorNote error={result.error} />}
+      {ready && summary && !result.isFetching && (
+        <div className="mb-4">
+          <StackedMonthChart
+            rows={summary.rows}
+            series={summary.series}
+            xFormatter={
+              summary.xKind === "day"
+                ? formatDate
+                : summary.xKind === "month"
+                  ? formatPeriod
+                  : (value) => value
+            }
+          />
+        </div>
+      )}
       {ready && result.data && !result.isFetching && <ReportResultTable result={result.data} />}
     </Card>
   );

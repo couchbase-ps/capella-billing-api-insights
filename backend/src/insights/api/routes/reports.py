@@ -15,7 +15,10 @@ from insights.reports.registry import (
     registry,
     result_to_csv,
     result_to_json,
+    result_to_xlsx,
 )
+
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 router = APIRouter(prefix="/api/reports")
 
@@ -33,7 +36,7 @@ def run_report(
     key: str,
     date_from: date | None = Query(None, alias="from"),
     date_to: date | None = Query(None, alias="to"),
-    fmt: Literal["json", "csv"] = Query("json", alias="format"),
+    fmt: Literal["json", "csv", "xlsx"] = Query("json", alias="format"),
 ) -> Any:
     definition = registry.get(key)
     if definition is None:
@@ -46,6 +49,13 @@ def run_report(
             result = definition.run(ctx)
         except ReportError as exc:
             raise ApiError(400, "invalid_params", str(exc)) from exc
+    if fmt == "xlsx":
+        filename = f"{key}-{lo.isoformat()}_to_{hi.isoformat()}.xlsx"
+        return Response(
+            content=result_to_xlsx(result, definition.title),
+            media_type=XLSX_MEDIA_TYPE,
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
     if fmt == "csv":
         filename = f"{key}-{lo.isoformat()}_to_{hi.isoformat()}.csv"
         return Response(

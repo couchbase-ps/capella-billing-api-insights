@@ -10,10 +10,10 @@ import {
 import { lastDays } from "../lib/ranges";
 
 describe("format helpers", () => {
-  it("formats credits with two decimals and the cr unit", () => {
-    expect(formatCredits(12.5)).toBe("12.50 cr");
-    expect(formatCredits(1234567.891)).toBe("1,234,567.89 cr");
-    expect(formatCredits(0)).toBe("0.00 cr");
+  it("formats credits with two decimals and no unit", () => {
+    expect(formatCredits(12.5)).toBe("12.50");
+    expect(formatCredits(1234567.891)).toBe("1,234,567.89");
+    expect(formatCredits(0)).toBe("0.00");
   });
 
   it("renders null as an em-dash, never as zero", () => {
@@ -30,7 +30,7 @@ describe("format helpers", () => {
   });
 
   it("prefers credits over currency in formatSpend", () => {
-    expect(formatSpend(5, 100)).toBe("5.00 cr");
+    expect(formatSpend(5, 100)).toBe("5.00");
     expect(formatSpend(null, 100, "USD")).toBe("$100.00");
   });
 

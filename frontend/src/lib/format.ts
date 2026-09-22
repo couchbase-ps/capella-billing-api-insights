@@ -10,12 +10,12 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
-/** Credits with 2 decimals and the "cr" unit; null renders as an em-dash, never as 0. */
+/** Credits with 2 decimals and no unit (credits are the default unit); null renders as an em-dash, never as 0. */
 export function formatCredits(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return ABSENT;
   }
-  return `${creditFormatter.format(value)} cr`;
+  return creditFormatter.format(value);
 }
 
 export function formatCurrency(value: number | null | undefined, currency = "USD"): string {

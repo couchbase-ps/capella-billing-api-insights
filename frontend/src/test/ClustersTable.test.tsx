@@ -14,7 +14,7 @@ describe("ClustersTable", () => {
       "href",
       "/clusters/cluster-1",
     );
-    expect(rows[0]).toHaveTextContent("51.20 cr");
+    expect(rows[0]).toHaveTextContent("51.20");
     expect(rows[1]).toHaveTextContent("dev-free");
     expect(rows[1]).toHaveTextContent("free tier");
     expect(rows[1]).toHaveTextContent("turnedOff");
@@ -39,6 +39,6 @@ describe("AnalyticsTable", () => {
       within(rows[0] as HTMLElement).getByRole("link", { name: "analytics-eu" }),
     ).toHaveAttribute("href", "/analytics/analytics-1");
     expect(rows[0]).toHaveTextContent("8 vCPU · 32 GB");
-    expect(rows[0]).toHaveTextContent("80.00 cr");
+    expect(rows[0]).toHaveTextContent("80.00");
   });
 });

@@ -66,9 +66,10 @@ a trailing window (default 7 days).
 
 ## Custom reports
 
-Reports are `ReportDefinition`s registered in `backend/src/insights/reports/`. Two are built
-in (`consumption-summary`, `cluster-daily`); the target custom credits report will be added
-there once its definition is agreed (see the design spec §8).
+Reports are `ReportDefinition`s registered in `backend/src/insights/reports/`. Five are built
+in: `consumption-summary`, `cluster-daily` and the three monthly pivots defined in
+[docs/custom-reports.md](docs/custom-reports.md) (`credits-by-category`, `credits-by-plan`,
+`credits-by-cluster`). Every report can be fetched as JSON, CSV or Excel (`format=xlsx`).
 
 ## Development
 

@@ -1,9 +1,9 @@
-import { Download } from "lucide-react";
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { buildUrl } from "../api/client";
 import { useReport } from "../api/hooks";
 import { StackedMonthChart } from "../components/charts/StackedMonthChart";
+import { DownloadMenu } from "../components/DownloadMenu";
 import { ReportResultTable } from "../components/ReportResultTable";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { Card, ErrorNote, LoadingRow, PageHeader } from "../components/ui";
@@ -46,21 +46,19 @@ function InsightCard({
   to: string;
 }): JSX.Element {
   const result = useReport(report.key, { from, to });
-  const csvHref = buildUrl(`/api/reports/${report.key}`, { from, to, format: "csv" });
+  const download = (format: string) => buildUrl(`/api/reports/${report.key}`, { from, to, format });
   const meta = result.data?.meta;
   const summary = useMemo(() => (result.data ? summarize(result.data) : null), [result.data]);
   return (
     <Card
       title={report.title}
       action={
-        <a
-          href={csvHref}
-          download
-          className="inline-flex items-center gap-1 rounded-sm border border-border px-2.5 py-1 text-label-sm hover:bg-surface-alt"
-        >
-          <Download size={14} aria-hidden="true" />
-          Download CSV
-        </a>
+        <DownloadMenu
+          options={[
+            { label: "CSV", href: download("csv") },
+            { label: "Excel", href: download("xlsx") },
+          ]}
+        />
       }
     >
       <p className="mb-3 text-caption text-text-muted">
@@ -99,12 +97,6 @@ export function Insights(): JSX.Element {
         subtitle="Monthly credit tables with a Total row, ready to paste into an account report."
         action={
           <div className="flex flex-wrap items-end gap-3">
-            <SegmentedControl
-              label="Insight table"
-              options={INSIGHTS.map((entry) => ({ value: entry.key, label: entry.toggle }))}
-              value={selected}
-              onChange={setSelected}
-            />
             <label className="flex flex-col gap-1 text-caption text-text-muted">
               From month
               <input
@@ -131,6 +123,14 @@ export function Insights(): JSX.Element {
           </div>
         }
       />
+      <div className="mb-4 flex justify-center">
+        <SegmentedControl
+          label="Insight table"
+          options={INSIGHTS.map((entry) => ({ value: entry.key, label: entry.toggle }))}
+          value={selected}
+          onChange={setSelected}
+        />
+      </div>
       {report && <InsightCard key={report.key} report={report} from={range.from} to={range.to} />}
     </>
   );

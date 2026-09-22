@@ -69,7 +69,16 @@ always reconciles with report 1.
 Rows: one per month × instance. **App Service credits are attributed to the operational
 cluster they are attached to** (`appService.clusterId`) and land in the AppServices columns of
 that cluster's row; an App Service whose cluster is unknown gets its own row. Analytics
-clusters are their own rows. `Unattributed` holds the org remainder.
+clusters are their own rows; their credits come from the project-level Analytics figure,
+shared by cluster size when a project has more than one (see the API analysis §7).
+
+`Unattributed` (also a plan row in report 2) is the org total minus everything attributed to
+instances that exist at sync time. It is made of:
+- instances **destroyed before the sync ran** (their credits stay in the org total but there
+  is no instance left to fetch them for) — the dominant part in organizations with churn;
+- **AI Data Plane** usage (`aiServices*`), which has no inventory in this tool yet;
+- org-level items with no instance (some data transfer, private endpoints, Data API);
+- Capella rounding differences (a few hundredths of a credit, may be slightly negative).
 
 - `Total Plan Developer Pro` / `Total Plan Enterprise` (and `Total Plan Basic` when any Basic
   instance exists): the row's total credits when the instance's plan matches, otherwise null.

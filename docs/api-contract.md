@@ -116,9 +116,9 @@ days; `period` is then `YYYY-MM`.
 
 Built-in report params: `consumption-summary` (from, to) rows cover every scope including `analytics`; `cluster-daily` (from, to, `clusterId` = an operational **or** Analytics cluster id, the backend resolves the scope); the three monthly custom reports `credits-by-category`, `credits-by-plan`, `credits-by-cluster` (from, to) defined in `docs/custom-reports.md`.
 
-`GET /api/reports/{key}?from&to&format=json|csv` → JSON:
+`GET /api/reports/{key}?from&to&format=json|csv|xlsx` → JSON:
 `{"key","title","from","to","columns":[{"key":"cluster","label":"Cluster","type":"string|number|date|month|credits|currency"}],"rows":[{...}],"totals":{...}|null,"meta":{"unit":"credits|USD","categoryOrder":[...],"partialMonths":[...],"onDemandMethod":"proportional-by-plan"}}` — `totals` is the Total row keyed by column key (label columns hold `"Total"` in the first column and null elsewhere); `meta` keys are optional per report.
-CSV: `text/csv` with `Content-Disposition: attachment; filename=<key>-<from>_to_<to>.csv`.
+CSV: `text/csv` with `Content-Disposition: attachment; filename=<key>-<from>_to_<to>.csv`. XLSX: one-sheet workbook (bold header, numeric cells, bold Total row) with the same filename pattern and `.xlsx`.
 
 ## Sync
 
