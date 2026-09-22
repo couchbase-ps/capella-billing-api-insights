@@ -33,3 +33,17 @@ export function monthRangeToDates(from: string, to: string, now = new Date()): D
   const clipped = end.getTime() > yesterday.getTime() ? yesterday : end;
   return { from: toIsoDate(start), to: toIsoDate(clipped) };
 }
+
+/**
+ * Reports default window: the first day of the previous month to the last day of the current
+ * month (UTC). Days without billing data yet simply produce no rows.
+ */
+export function reportDefaultRange(now = new Date()): DateRange {
+  const current = toIsoMonth(now);
+  const previous = addMonths(current, -1);
+  const [py, pm] = previous.split("-").map(Number);
+  const [cy, cm] = current.split("-").map(Number);
+  const start = new Date(Date.UTC(py ?? 1970, (pm ?? 1) - 1, 1));
+  const end = new Date(Date.UTC(cy ?? 1970, cm ?? 1, 0));
+  return { from: toIsoDate(start), to: toIsoDate(end) };
+}

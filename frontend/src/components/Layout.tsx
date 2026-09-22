@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Boxes,
   FileText,
   LayoutDashboard,
   Server,
@@ -10,6 +9,7 @@ import {
 import type { JSX } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useHealth, useOrganization } from "../api/hooks";
+import capellaLogo from "../assets/capella-logo.svg";
 import { SetupBanner } from "./SetupBanner";
 
 const NAV = [
@@ -28,9 +28,9 @@ export function Layout(): JSX.Element {
     <div className="flex min-h-screen">
       <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface">
         <div className="border-b border-border px-4 py-4">
-          <div className="flex items-center gap-2 text-primary">
-            <Boxes size={18} aria-hidden="true" />
-            <span className="text-label-upper uppercase">Capella billing</span>
+          <div className="flex flex-col gap-1">
+            <img src={capellaLogo} alt="Capella" className="h-6 w-auto self-start" />
+            <span className="text-label-upper uppercase text-text-muted">Billing insights</span>
           </div>
           <p
             className="mt-2 truncate text-heading-sm text-on-surface-strong"

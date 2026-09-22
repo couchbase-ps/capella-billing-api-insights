@@ -26,3 +26,17 @@ describe("months", () => {
     });
   });
 });
+
+describe("reportDefaultRange", () => {
+  it("spans the first day of the previous month to the last day of the current month", async () => {
+    const { reportDefaultRange } = await import("../lib/months");
+    expect(reportDefaultRange(new Date("2026-09-22T10:00:00Z"))).toEqual({
+      from: "2026-08-01",
+      to: "2026-09-30",
+    });
+    expect(reportDefaultRange(new Date("2026-01-05T10:00:00Z"))).toEqual({
+      from: "2025-12-01",
+      to: "2026-01-31",
+    });
+  });
+});

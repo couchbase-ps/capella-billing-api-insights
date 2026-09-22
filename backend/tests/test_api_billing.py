@@ -141,6 +141,7 @@ def test_sync_status_and_trigger(client: TestClient) -> None:
     assert set(run["detail"]) == {
         "clustersSynced",
         "bucketsSkipped",
+        "endpointsSkipped",
         "appServicesSynced",
         "analyticsClustersSynced",
         "billingWindows",

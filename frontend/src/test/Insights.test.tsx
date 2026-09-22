@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../App";
 import type { ReportResult } from "../api/types";
@@ -40,7 +40,7 @@ const byCluster: ReportResult = {
 };
 
 describe("Insights", () => {
-  it("renders the three monthly tables with their Total rows and CSV links", async () => {
+  it("shows one monthly table at a time with a summary chart, Total row and CSV link", async () => {
     stubFetch(
       defaultRoutes({
         "/api/reports/credits-by-category": byCategory,
@@ -50,14 +50,22 @@ describe("Insights", () => {
     );
     renderWithProviders(<App />, { route: "/insights" });
     expect(await screen.findByText("Sum of consumed Credits")).toBeInTheDocument();
-    expect(await screen.findByText("Cluster Instance Name")).toBeInTheDocument();
-    expect(screen.getAllByText("Total").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Jul 2026").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId("stacked-month-chart")).toBeInTheDocument();
+    expect(screen.getAllByText("Total").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Jul 2026").length).toBeGreaterThanOrEqual(1);
     const links = screen.getAllByRole("link", { name: /Download CSV/ });
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(1);
     expect(links[0]).toHaveAttribute(
       "href",
       expect.stringContaining("/api/reports/credits-by-category?"),
+    );
+    expect(screen.queryByText("Cluster Instance Name")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Usage per Cluster" }));
+    expect(await screen.findByText("Cluster Instance Name")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Usage per Cluster" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
     expect(await screen.findByText(/estimated proportionally/)).toBeInTheDocument();
   });

@@ -55,6 +55,7 @@ async def test_full_sync_populates_store(
     assert run.detail == {
         "clustersSynced": 4,
         "bucketsSkipped": 1,
+        "endpointsSkipped": 0,
         "appServicesSynced": 1,
         "analyticsClustersSynced": 1,
         "billingWindows": 2,

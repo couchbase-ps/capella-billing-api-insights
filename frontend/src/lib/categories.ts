@@ -78,6 +78,11 @@ export function categoryColor(category: string): string {
   return PALETTE[hashSlot(category)] ?? PALETTE[0];
 }
 
+/** Colour for the n-th series of a chart whose keys are not Capella categories (plans, clusters). */
+export function seriesColor(index: number): string {
+  return PALETTE[index % PALETTE.length] ?? PALETTE[0];
+}
+
 /** Stable ordering for legends and stacks: known categories first, then alphabetical. */
 export function sortCategories(categories: Iterable<string>): string[] {
   const knownOrder = Object.keys(KNOWN);

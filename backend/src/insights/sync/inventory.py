@@ -35,6 +35,23 @@ class Failure:
         return {"scope": self.scope, "instanceId": self.instance_id, "message": self.message}
 
 
+#: App Service states in which ``listAppEndpoints`` answers 422 ("Temporarily unavailable
+#: while the App Service is in the Turned Off state").
+APP_SERVICE_NOT_RUNNING_STATES = frozenset(
+    {
+        "pending",
+        "deploying",
+        "deploymentFailed",
+        "destroying",
+        "destroyFailed",
+        "turnedOff",
+        "turningOff",
+        "turnOffFailed",
+        "turningOn",
+        "turnOnFailed",
+    }
+)
+
 #: Cluster states in which Capella cannot reach the nodes; ``listBuckets`` answers 500 for them.
 NOT_RUNNING_STATES = frozenset(
     {
@@ -66,6 +83,7 @@ class Inventory:
     analytics: list[tuple[str, AnalyticsCluster]] = field(default_factory=list)
     failures: list[Failure] = field(default_factory=list)
     buckets_skipped: list[str] = field(default_factory=list)  # cluster ids not running
+    endpoints_skipped: list[str] = field(default_factory=list)  # app service ids not running
 
     @property
     def billable_clusters(self) -> list[tuple[str, Cluster]]:
@@ -120,6 +138,9 @@ async def fetch_inventory(client: CapellaSource, settings: Settings) -> Inventor
             inv.failures.append(
                 Failure("appservice", service.id, "linked cluster not found in inventory")
             )
+            continue
+        if service.current_state in APP_SERVICE_NOT_RUNNING_STATES:
+            inv.endpoints_skipped.append(service.id)
             continue
         try:
             inv.endpoints[service.id] = await client.list_app_endpoints(
