@@ -122,6 +122,8 @@ def _mobile(app_service: dict[str, Any], endpoints: list[dict[str, Any]]) -> dic
                 "instances": [
                     {
                         "name": app_service.get("name"),
+                        # topology-ui prints nodeIp verbatim ("undefined" when missing).
+                        "nodeIp": app_service.get("name") or "",
                         "resources": _resources(app_service.get("compute")),
                         "status": status,
                         "total": nodes if nodes is not None else absent(),

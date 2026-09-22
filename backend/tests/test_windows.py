@@ -11,7 +11,9 @@ def test_month_end() -> None:
 
 
 def test_single_month_window_is_clipped() -> None:
-    assert month_windows(date(2026, 8, 5), date(2026, 8, 20)) == [(date(2026, 8, 5), date(2026, 8, 20))]
+    assert month_windows(date(2026, 8, 5), date(2026, 8, 20)) == [
+        (date(2026, 8, 5), date(2026, 8, 20))
+    ]
 
 
 def test_windows_never_cross_month_boundary() -> None:
@@ -34,7 +36,9 @@ def test_windows_across_year_boundary() -> None:
 
 
 def test_single_day_window() -> None:
-    assert month_windows(date(2026, 3, 3), date(2026, 3, 3)) == [(date(2026, 3, 3), date(2026, 3, 3))]
+    assert month_windows(date(2026, 3, 3), date(2026, 3, 3)) == [
+        (date(2026, 3, 3), date(2026, 3, 3))
+    ]
 
 
 def test_empty_range_yields_no_windows() -> None:

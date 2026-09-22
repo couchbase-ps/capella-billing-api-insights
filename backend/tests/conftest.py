@@ -56,7 +56,9 @@ def db(settings: Settings) -> Database:
 
 
 @pytest.fixture
-def runner(db: Database, mock_client: MockCapellaClient, settings: Settings, today: date) -> SyncRunner:
+def runner(
+    db: Database, mock_client: MockCapellaClient, settings: Settings, today: date
+) -> SyncRunner:
     return SyncRunner(db, mock_client, settings, today=lambda: today)
 
 
@@ -69,7 +71,9 @@ async def synced_db(db: Database, runner: SyncRunner) -> Database:
 
 
 @pytest.fixture
-def client(settings: Settings, mock_client: MockCapellaClient, synced_db: Database, today: date) -> Iterator[TestClient]:
+def client(
+    settings: Settings, mock_client: MockCapellaClient, synced_db: Database, today: date
+) -> Iterator[TestClient]:
     app = create_app(settings, client=mock_client, db=synced_db, background_sync=False)
     app.state.today = lambda: today
     with TestClient(app) as test_client:

@@ -207,9 +207,9 @@ month-window splitting, limiter/retry, topology mapping, upsert semantics and re
 Frontend: vitest + Testing Library for the topology mapper glue and the consumption table.
 End-to-end: `docker compose --profile mock up` and a browser smoke check.
 
-## 8. Open slot: the custom credits report
+## 8. Custom credits reports (defined)
 
-The owner will define the target report later. What is already in place for it: daily
-per-instance per-category credit rows, inventory joins (project, plan, provider, region,
-node sizes), prepaid balance, and the report registry. Expected additions: a new
-`ReportDefinition`, a page or table in `Reports`, and possibly new sync fields.
+The owner defined three monthly pivot-style reports on 2026-09-22; they are specified in
+`docs/custom-reports.md` and implemented as `ReportDefinition`s `credits-by-category`,
+`credits-by-plan` and `credits-by-cluster`, plus a frontend **Insights** page that renders all
+three for a month range with their Total rows and CSV downloads.
