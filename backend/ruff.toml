@@ -8,3 +8,4 @@ ignore = ["RUF012"]
 
 [lint.per-file-ignores]
 "tests/*" = ["ASYNC"]
+"src/insights/api/routes/*" = ["B008"]

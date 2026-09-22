@@ -27,7 +27,7 @@ export interface Organization {
   name: string;
   billingCurrency: string;
   billingMode: BillingMode;
-  counts: { projects: number; clusters: number; appServices: number };
+  counts: { projects: number; clusters: number; appServices: number; analyticsClusters: number };
   lastSync: SyncRunSummary | null;
 }
 
@@ -114,12 +114,35 @@ export interface ClusterDetail extends ClusterCard {
   createdAt: string | null;
 }
 
+export interface AnalyticsClusterCard {
+  id: string;
+  name: string;
+  projectId: string;
+  projectName: string;
+  provider: string;
+  region: string;
+  nodes: number;
+  cpu: number;
+  ram: number;
+  supportPlan: string;
+  availability: string;
+  state: string;
+  credits7d: number | null;
+  credits30d: number | null;
+  currency7d: number | null;
+  currency30d: number | null;
+}
+
+export interface AnalyticsClusterDetail extends AnalyticsClusterCard {
+  createdAt: string | null;
+}
+
 export interface Money {
   credits: number | null;
   currency: number | null;
 }
 
-export type Scope = "org" | "cluster" | "appservice";
+export type Scope = "org" | "cluster" | "appservice" | "analytics";
 export type Granularity = "day" | "month";
 
 export interface ConsumptionPoint extends Money {
@@ -258,6 +281,7 @@ export interface SyncRun extends SyncRunSummary {
   detail: {
     clustersSynced: number;
     appServicesSynced: number;
+    analyticsClustersSynced: number;
     billingWindows: number;
     failures: SyncFailure[];
   } | null;

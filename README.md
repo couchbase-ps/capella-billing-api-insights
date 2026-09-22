@@ -25,6 +25,8 @@ docker compose up --build
 - UI: http://localhost:5173
 - API: http://localhost:8000 (`/health`, `/api/...`, OpenAPI at `/docs`)
 
+If those ports are busy, set `UI_PORT` / `API_PORT` in `.env`.
+
 The first start backfills the last 90 days of billing (configurable) and re-syncs every
 6 hours. Trigger a sync any time from the Overview page or with `curl -X POST localhost:8000/api/sync`.
 

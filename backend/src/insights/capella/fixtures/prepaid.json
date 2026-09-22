@@ -1,0 +1,22 @@
+{
+  "credits": [
+    {
+      "id": "sfdc-credit-ent-0001",
+      "creditName": "CN-ENT-2026-0001",
+      "supportPlan": "Plan: Enterprise",
+      "startOffsetDays": -180,
+      "expiresInDays": 185,
+      "total": 50000,
+      "used": 20125.5
+    },
+    {
+      "id": "sfdc-credit-dp-0002",
+      "creditName": "CN-DP-2025-0042",
+      "supportPlan": "Plan: Developer Pro",
+      "startOffsetDays": -245,
+      "expiresInDays": 120,
+      "total": 5000,
+      "used": 4500
+    }
+  ]
+}

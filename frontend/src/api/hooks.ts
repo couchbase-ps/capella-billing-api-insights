@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost } from "./client";
 import type {
+  AnalyticsClusterCard,
+  AnalyticsClusterDetail,
   AppServiceCard,
   BillingSummary,
   ClusterCard,
@@ -8,8 +10,8 @@ import type {
   Consumption,
   Granularity,
   Health,
-  OrgDailyConsumption,
   Organization,
+  OrgDailyConsumption,
   Prepaid,
   ReportDefinition,
   ReportResult,
@@ -18,7 +20,7 @@ import type {
   TopologyDocument,
 } from "./types";
 
-export interface DateRange {
+export interface DateRange extends Record<string, string> {
   from: string;
   to: string;
 }
@@ -34,6 +36,11 @@ export const queryKeys = {
   appServices: ["appservices"] as const,
   appServiceConsumption: (id: string, range: DateRange, granularity: Granularity) =>
     ["appservices", id, "consumption", range.from, range.to, granularity] as const,
+  analyticsClusters: ["analyticsclusters"] as const,
+  analyticsCluster: (id: string) => ["analyticsclusters", id] as const,
+  analyticsTopology: (id: string) => ["analyticsclusters", id, "topology"] as const,
+  analyticsConsumption: (id: string, range: DateRange, granularity: Granularity) =>
+    ["analyticsclusters", id, "consumption", range.from, range.to, granularity] as const,
   billingSummary: (range: DateRange) => ["billing", "summary", range.from, range.to] as const,
   billingDaily: (range: DateRange) => ["billing", "daily", range.from, range.to] as const,
   prepaid: ["billing", "prepaid"] as const,
@@ -97,6 +104,40 @@ export function useAppServiceConsumption(id: string, range: DateRange, granulari
     queryKey: queryKeys.appServiceConsumption(id, range, granularity),
     queryFn: () =>
       apiGet<Consumption>(`/api/appservices/${encodeURIComponent(id)}/consumption`, {
+        ...range,
+        granularity,
+      }),
+  });
+}
+
+export function useAnalyticsClusters() {
+  return useQuery({
+    queryKey: queryKeys.analyticsClusters,
+    queryFn: () => apiGet<AnalyticsClusterCard[]>("/api/analyticsclusters"),
+  });
+}
+
+export function useAnalyticsCluster(id: string) {
+  return useQuery({
+    queryKey: queryKeys.analyticsCluster(id),
+    queryFn: () =>
+      apiGet<AnalyticsClusterDetail>(`/api/analyticsclusters/${encodeURIComponent(id)}`),
+  });
+}
+
+export function useAnalyticsTopology(id: string) {
+  return useQuery({
+    queryKey: queryKeys.analyticsTopology(id),
+    queryFn: () =>
+      apiGet<TopologyDocument>(`/api/analyticsclusters/${encodeURIComponent(id)}/topology`),
+  });
+}
+
+export function useAnalyticsConsumption(id: string, range: DateRange, granularity: Granularity) {
+  return useQuery({
+    queryKey: queryKeys.analyticsConsumption(id, range, granularity),
+    queryFn: () =>
+      apiGet<Consumption>(`/api/analyticsclusters/${encodeURIComponent(id)}/consumption`, {
         ...range,
         granularity,
       }),

@@ -48,9 +48,11 @@ export function formatPeriod(period: string): string {
   if (/^\d{4}-\d{2}$/.test(period)) {
     const date = parse(`${period}-01`);
     return date
-      ? new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" }).format(
-          date,
-        )
+      ? new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          year: "numeric",
+          timeZone: "UTC",
+        }).format(date)
       : period;
   }
   const date = parse(period);

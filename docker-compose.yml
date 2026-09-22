@@ -1,6 +1,7 @@
 # Capella Billing API Insights — local stack.
 #   docker compose up --build                       # real Capella (needs CAPELLA_API_KEY in .env)
 #   CAPELLA_MOCK=true docker compose up --build     # fixture-backed demo, no key needed
+# Host ports default to 5173 (UI) and 8000 (API); override with UI_PORT / API_PORT in .env.
 name: capella-billing-api-insights
 
 x-backend-env: &backend-env
@@ -23,7 +24,7 @@ services:
       <<: *backend-env
       CAPELLA_MOCK: ${CAPELLA_MOCK:-false}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     volumes:
       - insights-data:/data
     healthcheck:
@@ -40,7 +41,7 @@ services:
       # Vite proxies /api and /health to this URL; the browser talks to :5173 only.
       BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
     ports:
-      - "5173:5173"
+      - "${UI_PORT:-5173}:5173"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

@@ -195,6 +195,22 @@ class AppEndpoint(CapellaModel):
     state: str | None = None
 
 
+class AnalyticsCluster(CapellaModel):
+    """Capella Analytics (Columnar) cluster from the Analytics Management API."""
+
+    id: str
+    name: str
+    description: str | None = None
+    cloud_provider: str
+    region: str
+    nodes: int
+    compute: Compute
+    support: Support | None = None
+    availability: Availability | None = None
+    current_state: str
+    audit: Audit | None = None
+
+
 # --- billing ----------------------------------------------------------------------------
 
 

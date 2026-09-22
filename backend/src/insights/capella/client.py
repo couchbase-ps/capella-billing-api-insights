@@ -12,6 +12,7 @@ import httpx
 
 from insights.capella.limiter import RetryPolicy, Sleeper, TokenBucket
 from insights.capella.models import (
+    AnalyticsCluster,
     AppEndpoint,
     AppService,
     Bucket,
@@ -69,6 +70,7 @@ class CapellaSource(Protocol):
     async def list_app_endpoints(
         self, project_id: str, cluster_id: str, app_service_id: str
     ) -> list[AppEndpoint]: ...
+    async def list_analytics_clusters(self, project_id: str) -> list[AnalyticsCluster]: ...
     async def categorized_billing(
         self,
         start: date,
@@ -233,6 +235,11 @@ class CapellaClient:
         )
         return [AppEndpoint.model_validate(row) for row in await self.walk_pages(path)]
 
+    async def list_analytics_clusters(self, project_id: str) -> list[AnalyticsCluster]:
+        """Analytics (Columnar) clusters of a project via the Analytics Management API."""
+        path = f"/v4/organizations/{self._org()}/projects/{project_id}/analyticsClusters"
+        return [AnalyticsCluster.model_validate(row) for row in await self.walk_pages(path)]
+
     # --- billing ------------------------------------------------------------------------
 
     async def categorized_billing(
@@ -254,9 +261,7 @@ class CapellaClient:
             filters["categories"] = list(categories)
         if filters:
             body["filters"] = filters
-        payload = await self.request(
-            "POST", f"/v4/organizations/{self._org()}/billing", json=body
-        )
+        payload = await self.request("POST", f"/v4/organizations/{self._org()}/billing", json=body)
         return CategorizedBilling.model_validate(payload["data"])
 
     async def itemized_billing(

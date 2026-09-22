@@ -10,6 +10,9 @@ const PALETTE = [
   "#008300", // green
   "#4a3aa7", // violet
   "#e34948", // red
+  "#0e7c86", // teal (extension slot)
+  "#8a6d3b", // brown (extension slot)
+  "#5b6b7a", // slate (extension slot)
 ] as const;
 
 interface CategoryMeta {
@@ -25,11 +28,14 @@ const KNOWN: Record<string, CategoryMeta> = {
   dataTransferStandard: { label: "Data transfer", color: PALETTE[4] },
   privateEndpointsStandard: { label: "Private endpoints", color: PALETTE[5] },
   dataApiStandard: { label: "Data API", color: PALETTE[6] },
+  analyticsCompute: { label: "Analytics compute", color: PALETTE[7] },
+  analyticsStorage: { label: "Analytics storage", color: PALETTE[8] },
+  analyticsClusterBackup: { label: "Analytics backups", color: PALETTE[9] },
 };
 
 const PREFIXES: { prefix: string; label: string; color: string }[] = [
   { prefix: "analytics", label: "Analytics", color: PALETTE[7] },
-  { prefix: "aiServices", label: "AI", color: PALETTE[6] },
+  { prefix: "aiServices", label: "AI", color: PALETTE[10] },
 ];
 
 function humanize(camel: string): string {
